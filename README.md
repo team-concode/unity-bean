@@ -57,6 +57,10 @@ public class TestRepository {
 }
 ```
 
+If you implement "public async Task<bool> Initialize()" method then the bean container will call that method automatically while initialize.
+At the contstructor, you can not use the autowired fileld it still not linked yet at that time. You can use "Initialize()" method instead of constructor.
+    
+
 ### Initialize
 You need to initialize Bean Controller while starting the game.
 ```C#
