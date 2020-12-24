@@ -7,23 +7,18 @@ using UnityEngine;
 
 namespace UnityBean {
     public static class BeanContainer {
-        private static Dictionary<BeanInfo, List<AutoWiredItem>> allBeans;
+        private static Dictionary<BeanInfo, List<WiredItem>> allBeans;
         private static Dictionary<string, object> beanMap;
 
         public static async Task<bool> Initialize(Action<string> onBeanStart,
             Action<string> onBeanSuccess,
             Action<string> onBeanFailed) {
             // get bean info
-            var components = GetBeans<Component>();
             var services = GetBeans<Service>();
             var repositories = GetBeans<Repository>();
             var controllers = GetBeans<Controller>();
 
-            allBeans = new Dictionary<BeanInfo, List<AutoWiredItem>>();
-            foreach (var bean in components) {
-                allBeans.Add(bean.Key, bean.Value);
-            }
-
+            allBeans = new Dictionary<BeanInfo, List<WiredItem>>();
             foreach (var bean in services) {
                 allBeans.Add(bean.Key, bean.Value);
             }
@@ -76,6 +71,39 @@ namespace UnityBean {
             return true;
         }
 
+        public static void DynamicDI(object obj) {
+            var autoWiredItems = GetWiredItems<DynamicWired>(obj.GetType());
+            foreach (var autoWired in autoWiredItems) {
+                var name = autoWired.field.FieldType.Name;
+                beanMap.TryGetValue(name, out object bean);
+                if (bean == null) {
+                    Debug.LogError("Can not found bean: " + name + " at the " + obj.GetType().Name);
+                    continue;
+                }
+
+                autoWired.field.SetValue(obj, bean);
+            }
+        }
+
+        private static List<WiredItem> GetWiredItems<T>(Type type) {
+            var wiredItems = new List<WiredItem>();
+            var allAutoWired =
+                from a in type.GetFields(BindingFlags.NonPublic |
+                                         BindingFlags.Public |
+                                         BindingFlags.Instance)
+                    
+                let attributes = a.IsDefined(typeof(T), false)
+                where attributes 
+                select new { Field = a };
+
+            foreach (var autoWired in allAutoWired) {
+                wiredItems.Add(new WiredItem(autoWired.Field));
+            }
+
+            return wiredItems;
+        }
+        
+
         public static T GetBean<T>() {
             beanMap.TryGetValue(typeof(T).Name, out object instance);
             return (T) instance;
@@ -104,18 +132,17 @@ namespace UnityBean {
             }
         }
 
-        public class AutoWiredItem {
+        public class WiredItem {
             public FieldInfo field { get; }
 
-            public AutoWiredItem(FieldInfo field) {
+            public WiredItem(FieldInfo field) {
                 this.field = field;
             }
         }
 
-        public static Dictionary<BeanInfo, List<AutoWiredItem>> GetBeans<T>() where T : Attribute {
-            var res = new Dictionary<BeanInfo, List<AutoWiredItem>>();
+        public static Dictionary<BeanInfo, List<WiredItem>> GetBeans<T>() where T : Attribute {
+            var res = new Dictionary<BeanInfo, List<WiredItem>>();
 
-            // get all test suites
             var beans =
                 from a in AppDomain.CurrentDomain.GetAssemblies()
                 from t in a.GetTypes()
@@ -125,23 +152,9 @@ namespace UnityBean {
 
             foreach (var bean in beans) {
                 var obj = MakeSingletonInstance(bean.Type);
-                var tests = new List<AutoWiredItem>();
-
+                var autoWiredItems = GetWiredItems<AutoWired>(bean.Type);
                 var key = new BeanInfo(bean.Type.FullName, obj);
-                res.Add(key, tests);
-
-                var allAutoWired =
-                    from a in bean.Type.GetFields(BindingFlags.NonPublic |
-                                                  BindingFlags.Public |
-                                                  BindingFlags.Instance)
-                    
-                    let attributes = a.IsDefined(typeof(AutoWired), false)
-                    where attributes 
-                    select new { Field = a };
-
-                foreach (var autoWired in allAutoWired) {
-                    tests.Add(new AutoWiredItem(autoWired.Field));
-                }
+                res.Add(key, autoWiredItems);
 
                 foreach (var method in bean.Type.GetMethods()) {
                     if (method.Name == "Initialize") {

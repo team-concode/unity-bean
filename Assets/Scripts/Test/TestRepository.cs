@@ -1,11 +1,7 @@
-using System.Threading.Tasks;
+using UnityBean;
 
-[UnityBean.Repository]
+[Repository]
 public class TestRepository {
-    public async Task<bool> Initialize() {
-        return true;
-    }
-
     public string ReadValue() {
         return "Hello";
     }

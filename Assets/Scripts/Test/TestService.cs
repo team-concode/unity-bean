@@ -1,14 +1,8 @@
-using System.Threading.Tasks;
-using UnityEngine;
+using UnityBean;
 
-[UnityBean.Service]
+[Service]
 public class TestService {
-    [UnityBean.AutoWired] 
-    private TestRepository repository;
-    
-    public async Task<bool> Initialize() {
-        return true;
-    }
+    [AutoWired] private TestRepository repository;
 
     public string GetValue() {
         return repository.ReadValue();

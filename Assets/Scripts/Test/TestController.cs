@@ -1,10 +1,10 @@
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityBean;
 
-[UnityBean.Controller]
+[Controller]
 public class TestController {
-    [UnityBean.AutoWired] 
-    private TestService testService;
+    [AutoWired] private TestService testService;
 
     public async Task<bool> Initialize() {
         Test();

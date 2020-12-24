@@ -1,16 +1,7 @@
 using System;
 
 namespace UnityBean {
-    [AttributeUsage(AttributeTargets.Class)]
-    public class Component : Attribute {
-        public string caseName { get; }
-
-        public Component() {
-            this.caseName = this.TypeId.ToString();
-        }
-    }
-
-    [AttributeUsage(AttributeTargets.Class)]
+    [AttributeUsage(AttributeTargets.Class)]  
     public class Service : Attribute {
         public string caseName { get; }
 
@@ -19,7 +10,7 @@ namespace UnityBean {
         }
     }
 
-    [AttributeUsage(AttributeTargets.Class)]
+    [AttributeUsage(AttributeTargets.Class)]  
     public class Controller : Attribute {
         public string caseName { get; }
 
@@ -28,7 +19,7 @@ namespace UnityBean {
         }
     }
 
-    [AttributeUsage(AttributeTargets.Class)]
+    [AttributeUsage(AttributeTargets.Class)]  
     public class Repository : Attribute {
         public string caseName { get; }
 
@@ -36,10 +27,16 @@ namespace UnityBean {
             this.caseName = this.TypeId.ToString();
         }
     }
-
-    [AttributeUsage(AttributeTargets.Field)]
+    
+    [AttributeUsage(AttributeTargets.Field)]  
     public class AutoWired : Attribute {
         public AutoWired() {
         }
     }
+    
+    [AttributeUsage(AttributeTargets.Field)]  
+    public class DynamicWired : Attribute {
+        public DynamicWired() {
+        }
+    }    
 }
