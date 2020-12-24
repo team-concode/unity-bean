@@ -11,7 +11,7 @@ Bean Container manage singleton componetns and it link automatically between com
 * AutoWired
 
 ### Sameple code 
-```
+```C#
 [Controller]
 public class TestController {
     [AutoWired] 
@@ -28,7 +28,7 @@ public class TestController {
 }
 ```
 
-```
+```C#
 [Service]
 public class TestService {
     [AutoWired] 
@@ -44,7 +44,7 @@ public class TestService {
 }
 ```
 
-```
+```C#
 [Repository]
 public class TestRepository {
     public async Task<bool> Initialize() {
@@ -59,7 +59,7 @@ public class TestRepository {
 
 ### Initialize
 You need to initialize Bean Controller while starting the game.
-```
+```C#
 public class IntroSceneController : MonoBehaviour {
     private async void Start() {
         await BeanContainer.Initialize(OnBeanStart, OnBeanSuccess, OnBeanFailed);
