@@ -119,9 +119,9 @@ namespace UnityBean {
             var beans =
                 from a in AppDomain.CurrentDomain.GetAssemblies()
                 from t in a.GetTypes()
-                let attributes = t.GetCustomAttributes(typeof(T), true)
-                where attributes != null && attributes.Length > 0
-                select new {Type = t, Attributes = attributes.Cast<T>()};
+                let attributes = t.IsDefined(typeof(T), false)
+                where attributes
+                select new {Type = t};
 
             foreach (var bean in beans) {
                 var obj = MakeSingletonInstance(bean.Type);
@@ -134,9 +134,10 @@ namespace UnityBean {
                     from a in bean.Type.GetFields(BindingFlags.NonPublic |
                                                   BindingFlags.Public |
                                                   BindingFlags.Instance)
-                    let attributes = a.GetCustomAttributes(typeof(AutoWired), true)
-                    where attributes != null && attributes.Length > 0
-                    select new {Type = a, Field = a, Attributes = attributes.Cast<AutoWired>()};
+                    
+                    let attributes = a.IsDefined(typeof(AutoWired), false)
+                    where attributes 
+                    select new { Field = a };
 
                 foreach (var autoWired in allAutoWired) {
                     tests.Add(new AutoWiredItem(autoWired.Field));
