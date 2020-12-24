@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 
-[Repository]
+[UnityBean.Repository]
 public class TestRepository {
     public async Task<bool> Initialize() {
         return true;

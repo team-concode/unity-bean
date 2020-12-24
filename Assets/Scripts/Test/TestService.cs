@@ -1,9 +1,9 @@
 using System.Threading.Tasks;
 using UnityEngine;
 
-[Service]
+[UnityBean.Service]
 public class TestService {
-    [AutoWired] 
+    [UnityBean.AutoWired] 
     private TestRepository repository;
     
     public async Task<bool> Initialize() {
