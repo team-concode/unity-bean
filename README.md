@@ -78,7 +78,7 @@ public class IntroSceneController : MonoBehaviour {
 ```
 
 
-### Dynamic Dependancy Injection
+### Dynamic Dependency Injection
 "AutoWired" attribute only works between the Bean. If you want to use the bean out side, you could use dynamic DI.
 ```C#
 public class ManualLinkTest : MonoBehaviour {
