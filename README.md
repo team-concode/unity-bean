@@ -79,7 +79,7 @@ public class IntroSceneController : MonoBehaviour {
 
 
 ### Dynamic Dependency Injection
-"AutoWired" attribute only works between the Bean. If you want to use the bean out side, you could use dynamic DI.
+"AutoWired" attribute only works among the Beans. If you want to use the bean outside, you can use dynamic DI.
 ```C#
 public class ManualLinkTest : MonoBehaviour {
     private TestService testService => UnityBean.BeanContainer.GetBean<TestService>();
