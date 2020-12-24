@@ -12,9 +12,9 @@ Bean Container manage singleton componetns and it link automatically between com
 
 ### Sameple code 
 ```C#
-[Controller]
+[UnityBean.Controller]
 public class TestController {
-    [AutoWired] 
+    [UnityBean.AutoWired] 
     private TestService testService;
 
     public async Task<bool> Initialize() {
@@ -29,9 +29,9 @@ public class TestController {
 ```
 
 ```C#
-[Service]
+[UnityBean.Service]
 public class TestService {
-    [AutoWired] 
+    [UnityBean.AutoWired] 
     private TestRepository repository;
     
     public async Task<bool> Initialize() {
@@ -45,7 +45,7 @@ public class TestService {
 ```
 
 ```C#
-[Repository]
+[UnityBean.Repository]
 public class TestRepository {
     public async Task<bool> Initialize() {
         return true;
@@ -59,26 +59,33 @@ public class TestRepository {
 
 If you implement "public async Task<bool> Initialize()" method then the bean container will call that method automatically while initialize.
 At the contstructor, you can not use the autowired fileld it still not linked yet at that time. You can use "Initialize()" method instead of constructor.
-    
+
 
 ### Initialize
 You need to initialize Bean Controller while starting the game.
 ```C#
 public class IntroSceneController : MonoBehaviour {
-    private async void Start() {
-        await BeanContainer.Initialize(OnBeanStart, OnBeanSuccess, OnBeanFailed);
+    private async void Awake() {
+        await UnityBean.BeanContainer.Initialize((bean) => {
+            Debug.Log("Starting " + bean);
+        }, (bean) => {
+            Debug.Log("Success starting " + bean);
+        }, (bean) => {
+            Debug.LogError("Failed starting " + bean);
+        });
     }
+}
+```
 
-    private void OnBeanStart(string name) {
-        Debug.Log("Starting " + name);
-    }
 
-    private void OnBeanSuccess(string name) {
-        Debug.Log("Starting " + name + " Succeed.");
-    }
+### Manual Link
+"AutoWired" attribute only works between the Bean. If you want to use the bean out side, you could use manual link mehtod.
+```
+public class ManualLinkTest : MonoBehaviour {
+    private TestService testService => UnityBean.BeanContainer.GetBean<TestService>();
 
-    private void OnBeanFailed(string name) {
-        Debug.LogError("Starting " + name + " Failed!");
+    private void Start() {
+        Debug.Log(testService.GetValue());
     }
 }
 ```
