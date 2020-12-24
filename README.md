@@ -80,7 +80,7 @@ public class IntroSceneController : MonoBehaviour {
 
 ### Manual Link
 "AutoWired" attribute only works between the Bean. If you want to use the bean out side, you could use manual link mehtod.
-```
+```C#
 public class ManualLinkTest : MonoBehaviour {
     private TestService testService => UnityBean.BeanContainer.GetBean<TestService>();
 
