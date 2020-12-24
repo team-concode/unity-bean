@@ -7,8 +7,8 @@ Bean Container manage singleton componetns and it link automatically between com
 * Controller
 * Service
 * Repository
-* Component 
 * AutoWired
+* DynamicWired
 
 ### Sameple code 
 ```C#
