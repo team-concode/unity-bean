@@ -79,7 +79,7 @@ public class IntroSceneController : MonoBehaviour {
 
 
 ### LazyWired
-"AutoWired" attribute only works among the Beans. If you want to use the bean outside, you can use dynamic DI.
+"AutoWired" attribute only works among the Beans. If you want to use the bean outside, you can use lazy DI.
 ```C#
 using UnityEngine;
 using UnityBean;
