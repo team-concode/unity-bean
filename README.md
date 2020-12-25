@@ -88,7 +88,8 @@ public class DynamicWiredTest : MonoBehaviour {
     [LazyWired] private TestService testService;
 
     private void Start() {
-        BeanContainer.LazyDI(this); // dynamic wire
+        // All dependency with the LazyWired attribute injected here.
+        BeanContainer.LazyDI(this); 
         Debug.Log(testService.GetValue());
     }
 }
