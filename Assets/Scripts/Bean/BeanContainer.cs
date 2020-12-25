@@ -9,6 +9,7 @@ namespace UnityBean {
     public static class BeanContainer {
         private static Dictionary<BeanInfo, List<WiredItem>> allBeans;
         private static Dictionary<string, object> beanMap;
+        private static Dictionary<Type, List<BeanInfo>> beanInterfaces;
 
         public static async Task<bool> Initialize(Action<string> onBeanStart,
             Action<string> onBeanSuccess,
@@ -18,6 +19,7 @@ namespace UnityBean {
             var repositories = GetBeans<Repository>();
             var controllers = GetBeans<Controller>();
 
+            beanInterfaces = new Dictionary<Type, List<BeanInfo>>();
             allBeans = new Dictionary<BeanInfo, List<WiredItem>>();
             foreach (var bean in services) {
                 allBeans.Add(bean.Key, bean.Value);
@@ -35,20 +37,20 @@ namespace UnityBean {
             beanMap = new Dictionary<string, object>();
             foreach (var bean in allBeans.Keys) {
                 beanMap.Add(bean.name, bean.instance);
+
+                var interfaces = bean.type.GetInterfaces();
+                foreach (var item in interfaces) {
+                    if (!beanInterfaces.TryGetValue(item, out List<BeanInfo> map)) {
+                        map = new List<BeanInfo>();
+                        beanInterfaces.Add(item, map);
+                    }
+                    map.Add(bean);
+                }
             }
 
             // wire beans
             foreach (var info in allBeans) {
-                foreach (var autoWired in info.Value) {
-                    var name = autoWired.field.FieldType.Name;
-                    beanMap.TryGetValue(name, out object bean);
-                    if (bean == null) {
-                        Debug.LogError("Can not found bean: " + name + " at the " + info.Key.name);
-                        return false;
-                    }
-
-                    autoWired.field.SetValue(info.Key.instance, bean);
-                }
+                Wire(info.Key.instance, info.Value);
             }
 
             // initialize
@@ -71,17 +73,38 @@ namespace UnityBean {
             return true;
         }
 
-        public static void DynamicDI(object obj) {
-            var autoWiredItems = GetWiredItems<DynamicWired>(obj.GetType());
-            foreach (var autoWired in autoWiredItems) {
-                var name = autoWired.field.FieldType.Name;
-                beanMap.TryGetValue(name, out object bean);
-                if (bean == null) {
-                    Debug.LogError("Can not found bean: " + name + " at the " + obj.GetType().Name);
-                    continue;
-                }
+        public static T GetBean<T>() {
+            beanMap.TryGetValue(typeof(T).Name, out object instance);
+            return (T) instance;
+        }
 
-                autoWired.field.SetValue(obj, bean);
+        public static void LazyDI(object obj) {
+            var wiredItems = GetWiredItems<LazyWired>(obj.GetType());
+            Wire(obj, wiredItems);
+        }
+
+        private static void Wire(object obj, List<WiredItem> wiredItems) {
+            foreach (var autoWired in wiredItems) {
+                var name = autoWired.field.FieldType.Name;
+                if (autoWired.field.FieldType.IsArray) {
+                    var elementType = autoWired.field.FieldType.GetElementType();
+                    beanInterfaces.TryGetValue(elementType, out List<BeanInfo> beanInfo);
+                    if (beanInfo != null) {
+                        var value = Array.CreateInstance(elementType, beanInfo.Count);
+                        for (int index = 0; index < beanInfo.Count; index++) {
+                            value.SetValue(beanInfo[index].instance, index);
+                        }
+                        autoWired.field.SetValue(obj, value);
+                    }
+                } else {
+                    beanMap.TryGetValue(name, out object bean);
+                    if (bean == null) {
+                        Debug.LogError("Can not found bean: " + name + " at the " + obj.GetType().Name);
+                        continue;
+                    }
+
+                    autoWired.field.SetValue(obj, bean);
+                }
             }
         }
 
@@ -102,43 +125,6 @@ namespace UnityBean {
 
             return wiredItems;
         }
-        
-
-        public static T GetBean<T>() {
-            beanMap.TryGetValue(typeof(T).Name, out object instance);
-            return (T) instance;
-        }
-
-        public class BeanInfo {
-            public string name { get; }
-            public object instance { get; }
-            public MethodInfo initialize { get; set; }
-
-            public BeanInfo(string name, object instance) {
-                this.name = name;
-                this.instance = instance;
-            }
-
-            public override bool Equals(object obj) {
-                if (obj == null || obj.GetType() != typeof(BeanInfo)) {
-                    return false;
-                }
-
-                return ((BeanInfo) obj).name == name;
-            }
-
-            public override int GetHashCode() {
-                return name.GetHashCode();
-            }
-        }
-
-        public class WiredItem {
-            public FieldInfo field { get; }
-
-            public WiredItem(FieldInfo field) {
-                this.field = field;
-            }
-        }
 
         public static Dictionary<BeanInfo, List<WiredItem>> GetBeans<T>() where T : Attribute {
             var res = new Dictionary<BeanInfo, List<WiredItem>>();
@@ -146,14 +132,14 @@ namespace UnityBean {
             var beans =
                 from a in AppDomain.CurrentDomain.GetAssemblies()
                 from t in a.GetTypes()
-                let attributes = t.IsDefined(typeof(T), false)
+                let attributes = t.IsDefined(typeof(T), true)
                 where attributes
                 select new {Type = t};
 
             foreach (var bean in beans) {
                 var obj = MakeSingletonInstance(bean.Type);
                 var autoWiredItems = GetWiredItems<AutoWired>(bean.Type);
-                var key = new BeanInfo(bean.Type.FullName, obj);
+                var key = new BeanInfo(bean.Type, obj);
                 res.Add(key, autoWiredItems);
 
                 foreach (var method in bean.Type.GetMethods()) {

@@ -35,8 +35,8 @@ namespace UnityBean {
     }
     
     [AttributeUsage(AttributeTargets.Field)]  
-    public class DynamicWired : Attribute {
-        public DynamicWired() {
+    public class LazyWired : Attribute {
+        public LazyWired() {
         }
     }    
 }
