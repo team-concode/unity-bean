@@ -8,7 +8,7 @@ Bean Container manage singleton componetns and it link automatically between com
 * Service
 * Repository
 * AutoWired
-* DynamicWired
+* LazyWired
 
 ### Sameple code 
 ```C#
@@ -77,7 +77,7 @@ public class IntroSceneController : MonoBehaviour {
 ```
 
 
-### DynamicWired
+### LazyWired
 "AutoWired" attribute only works among the Beans. If you want to use the bean outside, you can use dynamic DI.
 ```C#
 using UnityEngine;
@@ -87,8 +87,44 @@ public class DynamicWiredTest : MonoBehaviour {
     [DynamicWired] private TestService testService;
 
     private void Start() {
-        BeanContainer.DynamicDI(this); // dynamic wire
+        BeanContainer.LazyDI(this); // dynamic wire
         Debug.Log(testService.GetValue());
     }
 }
 ```
+
+### Array Wired
+```
+public interface UnitService {
+    void Print();
+}
+
+[Service]
+public class NpcService : UnitService {
+    public void Print() {
+        Debug.Log("Npc");
+    }
+}
+
+[Service]
+public class EnemyService : UnitService {
+    public void Print() {
+        Debug.Log("Enemy");
+    }
+}
+
+[Service]
+public class UnitServiceManager {
+    // Bean Container link 'UnitService' inteface automatically
+    // You can you this as a Factory or LookUpTable
+    [AutoWired] private UnitService[] unitServices;
+
+    public async Task<bool> Initialize() {
+        foreach (var service in unitServices) {
+            service.Print();
+        }
+        return true;
+    }
+}
+```
+
