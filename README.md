@@ -9,7 +9,7 @@ Bean Container manage singleton componetns and it link automatically between com
 * Repository
 * AutoWired
 * LazyWired
-* Array Wire
+* Interface Array Injection
 
 ### Sameple code 
 ```C#
@@ -95,7 +95,7 @@ public class DynamicWiredTest : MonoBehaviour {
 }
 ```
 
-### Array Wired
+### Interface Array Injection
 ```C#
 public interface UnitService {
     void Print();
