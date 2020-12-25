@@ -7,36 +7,27 @@ Bean Container manage singleton componetns and it link automatically between com
 * Controller
 * Service
 * Repository
-* Component 
 * AutoWired
+* DynamicWired
 
 ### Sameple code 
 ```C#
-[UnityBean.Controller]
-public class TestController {
-    [UnityBean.AutoWired] 
-    private TestService testService;
+using UnityBean;
 
-    public async Task<bool> Initialize() {
-        Test();
-        return true;
-    }
-
-    private void Test() {
-        Debug.Log(testService.GetValue());
+[Repository]
+public class TestRepository {
+    public string ReadValue() {
+        return "Hello";
     }
 }
 ```
 
 ```C#
-[UnityBean.Service]
+using UnityBean;
+
+[Service]
 public class TestService {
-    [UnityBean.AutoWired] 
-    private TestRepository repository;
-    
-    public async Task<bool> Initialize() {
-        return true;
-    }
+    [AutoWired] private TestRepository repository;
 
     public string GetValue() {
         return repository.ReadValue();
@@ -45,14 +36,22 @@ public class TestService {
 ```
 
 ```C#
-[UnityBean.Repository]
-public class TestRepository {
+using System.Threading.Tasks;
+using UnityEngine;
+using UnityBean;
+
+[Controller]
+public class TestController {
+    [AutoWired] private TestService testService;
+
+    // this will called while start up
     public async Task<bool> Initialize() {
+        Test();
         return true;
     }
 
-    public string ReadValue() {
-        return "Hello";
+    private void Test() {
+        Debug.Log(testService.GetValue());
     }
 }
 ```
@@ -78,13 +77,17 @@ public class IntroSceneController : MonoBehaviour {
 ```
 
 
-### Dynamic Dependency Injection
+### DynamicWired
 "AutoWired" attribute only works among the Beans. If you want to use the bean outside, you can use dynamic DI.
 ```C#
-public class ManualLinkTest : MonoBehaviour {
-    private TestService testService => UnityBean.BeanContainer.GetBean<TestService>();
+using UnityEngine;
+using UnityBean;
+
+public class DynamicWiredTest : MonoBehaviour {
+    [DynamicWired] private TestService testService;
 
     private void Start() {
+        BeanContainer.DynamicDI(this); // dynamic wire
         Debug.Log(testService.GetValue());
     }
 }
