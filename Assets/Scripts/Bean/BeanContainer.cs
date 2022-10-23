@@ -10,17 +10,59 @@ namespace UnityBean {
         private static Dictionary<BeanInfo, List<WiredItem>> allBeans;
         private static Dictionary<string, object> beanMap;
         private static Dictionary<Type, List<BeanInfo>> beanInterfaces;
+        private static bool ready;
 
-        public static async Task<bool> Initialize(Action<string> onBeanStart,
+        public static async Task<bool> Initialize(
+            Action<string> onBeanStart,
             Action<string> onBeanSuccess,
             Action<string> onBeanFailed) {
+
+            if (!ready) {
+                ReadyBean();
+                ready = true;
+            }
+
+            // initialize
+            foreach (var info in allBeans.Keys) {
+                if (info.initialize == null) {
+                    continue;
+                }
+                
+                onBeanStart?.Invoke(info.name);
+                var success = await (Task<bool>) info.initialize.Invoke(info.instance, null);
+                if (success) {
+                    onBeanSuccess?.Invoke(info.name);
+                } else {
+                    onBeanFailed?.Invoke(info.name);
+                    return false;
+                }
+            }
+
+            // post initialize
+            foreach (var info in allBeans.Keys) {
+                if (info.postInitialize == null) {
+                    continue;
+                }
+                
+                info.postInitialize.Invoke(info.instance, null);
+            }
+
+            return true;
+        }
+
+        private static void ReadyBean() {
             // get bean info
+            var modules = GetBeans<Module>();
             var services = GetBeans<Service>();
             var repositories = GetBeans<Repository>();
             var controllers = GetBeans<Controller>();
 
             beanInterfaces = new Dictionary<Type, List<BeanInfo>>();
             allBeans = new Dictionary<BeanInfo, List<WiredItem>>();
+            foreach (var bean in modules) {
+                allBeans.Add(bean.Key, bean.Value);
+            }
+
             foreach (var bean in services) {
                 allBeans.Add(bean.Key, bean.Value);
             }
@@ -36,8 +78,11 @@ namespace UnityBean {
             // build map
             beanMap = new Dictionary<string, object>();
             foreach (var bean in allBeans.Keys) {
-                beanMap.Add(bean.name, bean.instance);
+                if (bean.instance == null) {
+                    Debug.LogError("null instance: " + bean.name);
+                }
 
+                beanMap.Add(bean.name, bean.instance);
                 var interfaces = bean.type.GetInterfaces();
                 foreach (var item in interfaces) {
                     if (!beanInterfaces.TryGetValue(item, out List<BeanInfo> map)) {
@@ -47,30 +92,11 @@ namespace UnityBean {
                     map.Add(bean);
                 }
             }
-
+            
             // wire beans
             foreach (var info in allBeans) {
                 Wire(info.Key.instance, info.Value);
             }
-
-            // initialize
-            foreach (var info in allBeans.Keys) {
-                if (info.initialize == null) {
-                    continue;
-                }
-                
-                onBeanStart?.Invoke(info.name);
-                var success = await (Task<bool>) info.initialize.Invoke(info.instance, null);
-                if (success) {
-                    onBeanSuccess?.Invoke(info.name);
-                }
-                else {
-                    onBeanFailed?.Invoke(info.name);
-                    return false;
-                }
-            }
-
-            return true;
         }
 
         public static T GetBean<T>() {
@@ -78,7 +104,12 @@ namespace UnityBean {
             return (T) instance;
         }
 
-        public static void LazyDI(object obj) {
+        public static void LazyDI<T>(T obj) {
+            if (!ready) {
+                Debug.LogError("Bean is not ready");
+                return;
+            }
+            
             var wiredItems = GetWiredItems<LazyWired>(obj.GetType());
             Wire(obj, wiredItems);
         }
@@ -88,7 +119,7 @@ namespace UnityBean {
                 var name = autoWired.field.FieldType.Name;
                 if (autoWired.field.FieldType.IsArray) {
                     var elementType = autoWired.field.FieldType.GetElementType();
-                    beanInterfaces.TryGetValue(elementType, out List<BeanInfo> beanInfo);
+                    beanInterfaces.TryGetValue(elementType, out var beanInfo);
                     if (beanInfo != null) {
                         var value = Array.CreateInstance(elementType, beanInfo.Count);
                         for (int index = 0; index < beanInfo.Count; index++) {
@@ -97,13 +128,12 @@ namespace UnityBean {
                         autoWired.field.SetValue(obj, value);
                     }
                 } else {
-                    beanMap.TryGetValue(name, out object bean);
-                    if (bean == null) {
-                        Debug.LogError("Can not found bean: " + name + " at the " + obj.GetType().Name);
+                    if (beanMap.TryGetValue(name, out var bean)) {
+                        autoWired.field.SetValue(obj, bean);
                         continue;
                     }
 
-                    autoWired.field.SetValue(obj, bean);
+                    Debug.LogError("Can not found bean: " + name + " at the " + obj.GetType().Name);
                 }
             }
         }
@@ -145,6 +175,8 @@ namespace UnityBean {
                 foreach (var method in bean.Type.GetMethods()) {
                     if (method.Name == "Initialize") {
                         key.initialize = method;
+                    } else if (method.Name == "PostInitialize") {
+                        key.postInitialize = method;
                     }
                 }
             }
@@ -155,8 +187,8 @@ namespace UnityBean {
         private static object MakeSingletonInstance(Type t) {
             try {
                 return t.GetConstructor(new Type[] { })?.Invoke(new object[] { });
-            }
-            catch {
+            } catch (Exception e) {
+                Debug.LogError(e);
                 return null;
             }
         }

@@ -8,6 +8,7 @@ namespace UnityBean {
         public string name { get; }
         public object instance { get; }
         public MethodInfo initialize { get; set; }
+        public MethodInfo postInitialize { get; set; }
 
         public BeanInfo(Type type, object instance) {
             this.type = type;

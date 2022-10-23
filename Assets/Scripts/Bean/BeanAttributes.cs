@@ -2,6 +2,15 @@ using System;
 
 namespace UnityBean {
     [AttributeUsage(AttributeTargets.Class)]  
+    public class Module : Attribute {
+        public string caseName { get; }
+
+        public Module() {
+            this.caseName = this.TypeId.ToString();
+        }
+    }
+    
+    [AttributeUsage(AttributeTargets.Class)]  
     public class Service : Attribute {
         public string caseName { get; }
 

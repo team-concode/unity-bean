@@ -13,5 +13,7 @@ public class TestController {
 
     private void Test() {
         Debug.Log(testService.GetValue());
+        var cat = new Cat();
+        cat.Test();
     }
 }
