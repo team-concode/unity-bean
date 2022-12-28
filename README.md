@@ -7,6 +7,7 @@ Bean Container manage singleton componetns and it link automatically between com
 * Controller
 * Service
 * Repository
+* Module
 * AutoWired (Also support Array Style)
 * LazyWired (Also support Array Style)
 
