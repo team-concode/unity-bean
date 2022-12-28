@@ -84,7 +84,7 @@ public class IntroSceneController : MonoBehaviour {
 using UnityEngine;
 using UnityBean;
 
-public class DynamicWiredTest : MonoBehaviour {
+public class LazyWiredTest : MonoBehaviour {
     [LazyWired] private TestService testService;
 
     private void Start() {
