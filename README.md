@@ -1,7 +1,7 @@
 # unity-bean
+Unity bean is a lightweight dependency injection framework built specifically to target Unity 3D. There is a [Zenject](https://github.com/modesttree/Zenject) framework, but the injection part was a little inconvenient for me, so I made a new one.
 
-It provide some custom attributes which makes unity like JAVA Spring. 
-Bean Container manage singleton componetns and it link automatically between component with 'AutoWired' Attribute.
+If you are familiar with Java Spring's DI, you can use it right away. It provide some custom attributes which makes unity like JAVA Spring. Bean Container manage singleton componetns and it link automatically between component with 'AutoWired' Attribute.
 
 ### Attributes
 * Controller
